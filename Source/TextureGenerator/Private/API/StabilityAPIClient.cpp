@@ -30,7 +30,9 @@ void FStabilityAPIClient::GenerateImage(
     const FString& InNegativePrompt,
     UTexture2D* InReferenceTexture,
     float InStrength,
-    EImageGenerationModel InModel)
+    EImageGenerationModel InModel,
+    int32 InSeed,
+    const FString& InStylePreset)
 {
     // Cancel any existing request
     CancelRequest();
@@ -41,6 +43,8 @@ void FStabilityAPIClient::GenerateImage(
     ReferenceTexture = InReferenceTexture;
     CurrentStrength = InStrength;
     CurrentModel = InModel;
+    CurrentSeed = InSeed;
+    CurrentStylePreset = InStylePreset;
 
     // Convert texture to raw image data
     if (IsValid(ReferenceTexture))
@@ -206,6 +210,14 @@ TArray<uint8> FStabilityAPIClient::BuildMultipartFormData(const FString& Boundar
         AppendString(FString::Printf(TEXT("--%s%s"), *Boundary, *LineEnding));
         AppendString(FString::Printf(TEXT("Content-Disposition: form-data; name=\"seed\"%s%s"), *LineEnding, *LineEnding));
         AppendString(FString::Printf(TEXT("%d%s"), CurrentSeed, *LineEnding));
+    }
+
+    // Add image style guidance preset
+    if (!CurrentStylePreset.IsEmpty())
+    {
+        AppendString(FString::Printf(TEXT("--%s%s"), *Boundary, *LineEnding));
+        AppendString(FString::Printf(TEXT("Content-Disposition: form-data; name=\"style_preset\"%s%s"), *LineEnding, *LineEnding));
+        AppendString(FString::Printf(TEXT("%s%s"), *CurrentStylePreset, *LineEnding));
     }
 
     // Add reference image (for img2img workflows)

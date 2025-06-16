@@ -39,6 +39,8 @@ private:
     TSharedPtr<SNumericEntryBox<int32>> HeightBox;
     TSharedPtr<SObjectPropertyEntryBox> ReferenceTextureSelector;
     TSharedPtr<SSlider> StrengthSlider;
+    TSharedPtr<SNumericEntryBox<int32>> SeedEntryBox;
+    TSharedPtr<SComboBox<TSharedPtr<EStylePreset>>> StyleComboBox;
     TSharedPtr<SBox> StrengthContainer;
     TSharedPtr<SBox> ProgressBarContainer;
     TSharedPtr<SProgressBar> ProgressBar;
@@ -50,6 +52,10 @@ private:
     // Model selection data
     TArray<TSharedPtr<EImageGenerationModel>> ModelOptions;
     TSharedPtr<EImageGenerationModel> SelectedModelOption;
+
+    // Style preset data
+    TArray<TSharedPtr<EStylePreset>> StyleOptions;
+    TSharedPtr<EStylePreset> SelectedStyleOption;
 
     // Reference texture asset handle
     TWeakObjectPtr<UTexture2D> SelectedReferenceTexture;
@@ -67,6 +73,13 @@ private:
     FText GetModelDescription(EImageGenerationModel Model) const;
     void OnModelSelectionChanged(TSharedPtr<EImageGenerationModel> NewSelection, ESelectInfo::Type SelectInfo);
 
+    // Style preset handlers
+    TSharedRef<SWidget> MakeStyleComboWidget(TSharedPtr<EStylePreset> InOption);
+    FText GetStyleComboText() const;
+    FText GetStyleDisplayName(EStylePreset Style) const;
+    FString GetStyleAPIString(EStylePreset Style) const;
+    void OnStyleSelectionChanged(TSharedPtr<EStylePreset> NewSelection, ESelectInfo::Type SelectInfo);
+    
     // Reference image handlers
     void OnReferenceTextureChanged(const FAssetData& AssetData);
 
@@ -84,6 +97,7 @@ protected:
 
     float Strength = 0.5f;
     float GenerationProgress = 0.0f;
+    int32 GenerationSeed = 0;
     bool bInProgress = false;
 
     // We simulate the progress to give user some visual feedback since Stability AI does not provide a way to track it

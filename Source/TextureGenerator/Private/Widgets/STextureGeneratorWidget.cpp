@@ -52,6 +52,27 @@ void STextureGeneratorWidget::Construct(const FArguments& InArgs)
     ModelOptions.Add(MakeShareable(new EImageGenerationModel(EImageGenerationModel::StableDiffusion)));
     SelectedModelOption = ModelOptions[0];
 
+    // Initialize style selection options
+    StyleOptions.Add(MakeShareable(new EStylePreset(EStylePreset::None)));
+    StyleOptions.Add(MakeShareable(new EStylePreset(EStylePreset::Model3D)));
+    StyleOptions.Add(MakeShareable(new EStylePreset(EStylePreset::AnalogFilm)));
+    StyleOptions.Add(MakeShareable(new EStylePreset(EStylePreset::Anime)));
+    StyleOptions.Add(MakeShareable(new EStylePreset(EStylePreset::Cinematic)));
+    StyleOptions.Add(MakeShareable(new EStylePreset(EStylePreset::ComicBook)));
+    StyleOptions.Add(MakeShareable(new EStylePreset(EStylePreset::DigitalArt)));
+    StyleOptions.Add(MakeShareable(new EStylePreset(EStylePreset::Enhance)));
+    StyleOptions.Add(MakeShareable(new EStylePreset(EStylePreset::FantasyArt)));
+    StyleOptions.Add(MakeShareable(new EStylePreset(EStylePreset::Isometric)));
+    StyleOptions.Add(MakeShareable(new EStylePreset(EStylePreset::LineArt)));
+    StyleOptions.Add(MakeShareable(new EStylePreset(EStylePreset::LowPoly)));
+    StyleOptions.Add(MakeShareable(new EStylePreset(EStylePreset::ModelingCompound)));
+    StyleOptions.Add(MakeShareable(new EStylePreset(EStylePreset::NeonPunk)));
+    StyleOptions.Add(MakeShareable(new EStylePreset(EStylePreset::Origami)));
+    StyleOptions.Add(MakeShareable(new EStylePreset(EStylePreset::Photographic)));
+    StyleOptions.Add(MakeShareable(new EStylePreset(EStylePreset::PixelArt)));
+    StyleOptions.Add(MakeShareable(new EStylePreset(EStylePreset::TileTexture)));
+    SelectedStyleOption = StyleOptions[0]; // Default to None
+
     // Initialize progress variables
     bInProgress = false;
     GenerationProgress = 0.0f;
@@ -291,6 +312,109 @@ TSharedRef<SWidget> STextureGeneratorWidget::CreateImageSettingsSection()
                     .AutoWrapText(true)
                 ]
             ]
+        ]
+        + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(0.0f, 12.0f, 0.0f, 0.0f)
+        [
+            // Seed input section
+            SNew(SVerticalBox)
+            + SVerticalBox::Slot()
+            .AutoHeight()
+            [
+                SNew(STextBlock)
+                .Text(LOCTEXT("SeedLabel", "Seed"))
+                .Font(FCoreStyle::GetDefaultFontStyle("Regular", 9))
+            ]
+            + SVerticalBox::Slot()
+            .AutoHeight()
+            .Padding(0.0f, 4.0f, 0.0f, 0.0f)
+            [
+                SNew(SHorizontalBox)
+                + SHorizontalBox::Slot()
+                .FillWidth(1.0f)
+                [
+                    SAssignNew(SeedEntryBox, SNumericEntryBox<int32>)
+                    .Value_Lambda([this]() -> TOptional<int32>
+                    {
+                        return GenerationSeed >= 0 ? TOptional<int32>(GenerationSeed) : TOptional<int32>();
+                    })
+                    .OnValueChanged_Lambda([this](int32 NewValue)
+                    {
+                        GenerationSeed = NewValue;
+                    })
+                    .OnValueCommitted_Lambda([this](int32 NewValue, ETextCommit::Type CommitType)
+                    {
+                        GenerationSeed = NewValue;
+                    })
+                    .AllowSpin(true)
+                    .MinValue(0)
+                    .MaxValue(2147483647) // Max int32
+                    .MinSliderValue(0)
+                    .MaxSliderValue(1000000)
+                ]
+                + SHorizontalBox::Slot()
+                .AutoWidth()
+                .Padding(8.0f, 0.0f, 0.0f, 0.0f)
+                [
+                    SNew(SButton)
+                    .Text(LOCTEXT("RandomSeedButton", "Random"))
+                    .OnClicked_Lambda([this]() -> FReply
+                    {
+                        GenerationSeed = FMath::Rand();
+                        return FReply::Handled();
+                    })
+                    .ToolTipText(LOCTEXT("RandomSeedTooltip", "Generate a random seed value"))
+                ]
+            ]
+            + SVerticalBox::Slot()
+            .AutoHeight()
+            .Padding(0.0f, 4.0f, 0.0f, 0.0f)
+            [
+                SNew(STextBlock)
+                .Text(LOCTEXT("SeedHintText", "Seed controls randomness. Same seed with same settings produces identical results. Leave empty for random."))
+                .Font(FCoreStyle::GetDefaultFontStyle("Regular", 8))
+                .ColorAndOpacity(FSlateColor::UseSubduedForeground())
+                .AutoWrapText(true)
+            ]
+        ]
+        + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(0.0f, 12.0f, 0.0f, 0.0f)
+        [
+            // Style preset section
+            SNew(SVerticalBox)
+            + SVerticalBox::Slot()
+            .AutoHeight()
+            [
+                SNew(STextBlock)
+                .Text(LOCTEXT("StyleLabel", "Style Preset"))
+                .Font(FCoreStyle::GetDefaultFontStyle("Regular", 9))
+            ]
+            + SVerticalBox::Slot()
+            .AutoHeight()
+            .Padding(0.0f, 4.0f, 0.0f, 0.0f)
+            [
+                SAssignNew(StyleComboBox, SComboBox<TSharedPtr<EStylePreset>>)
+                .OptionsSource(&StyleOptions)
+                .OnGenerateWidget(this, &STextureGeneratorWidget::MakeStyleComboWidget)
+                .OnSelectionChanged(this, &STextureGeneratorWidget::OnStyleSelectionChanged)
+                .InitiallySelectedItem(SelectedStyleOption)
+                [
+                    SNew(STextBlock)
+                    .Text(this, &STextureGeneratorWidget::GetStyleComboText)
+                ]
+            ]
+            + SVerticalBox::Slot()
+            .AutoHeight()
+            .Padding(0.0f, 4.0f, 0.0f, 0.0f)
+            [
+                SNew(STextBlock)
+                .Text(LOCTEXT("StyleHintText", "Choose a style preset to influence the visual style of the generated image"))
+                .Font(FCoreStyle::GetDefaultFontStyle("Regular", 8))
+                .ColorAndOpacity(FSlateColor::UseSubduedForeground())
+                .AutoWrapText(true)
+            ]
         ];
 }
 
@@ -450,6 +574,126 @@ void STextureGeneratorWidget::OnModelSelectionChanged(TSharedPtr<EImageGeneratio
     }
 }
 
+TSharedRef<SWidget> STextureGeneratorWidget::MakeStyleComboWidget(TSharedPtr<EStylePreset> InOption)
+{
+    if (!InOption.IsValid())
+    {
+        return SNew(STextBlock).Text(LOCTEXT("InvalidStyle", "Invalid Style"));
+    }
+
+    return SNew(STextBlock)
+        .Text(GetStyleDisplayName(*InOption))
+        .Font(FCoreStyle::GetDefaultFontStyle("Regular", 9));
+}
+
+FText STextureGeneratorWidget::GetStyleComboText() const
+{
+    if (SelectedStyleOption.IsValid())
+    {
+        return GetStyleDisplayName(*SelectedStyleOption);
+    }
+    return LOCTEXT("SelectStyle", "Select Style");
+}
+
+FText STextureGeneratorWidget::GetStyleDisplayName(EStylePreset Style) const
+{
+    switch (Style)
+    {
+    case EStylePreset::None:
+        return LOCTEXT("StyleNone", "None");
+    case EStylePreset::Model3D:
+        return LOCTEXT("Style3DModel", "3D Model");
+    case EStylePreset::AnalogFilm:
+        return LOCTEXT("StyleAnalogFilm", "Analog Film");
+    case EStylePreset::Anime:
+        return LOCTEXT("StyleAnime", "Anime");
+    case EStylePreset::Cinematic:
+        return LOCTEXT("StyleCinematic", "Cinematic");
+    case EStylePreset::ComicBook:
+        return LOCTEXT("StyleComicBook", "Comic Book");
+    case EStylePreset::DigitalArt:
+        return LOCTEXT("StyleDigitalArt", "Digital Art");
+    case EStylePreset::Enhance:
+        return LOCTEXT("StyleEnhance", "Enhance");
+    case EStylePreset::FantasyArt:
+        return LOCTEXT("StyleFantasyArt", "Fantasy Art");
+    case EStylePreset::Isometric:
+        return LOCTEXT("StyleIsometric", "Isometric");
+    case EStylePreset::LineArt:
+        return LOCTEXT("StyleLineArt", "Line Art");
+    case EStylePreset::LowPoly:
+        return LOCTEXT("StyleLowPoly", "Low Poly");
+    case EStylePreset::ModelingCompound:
+        return LOCTEXT("StyleModelingCompound", "Modeling Compound");
+    case EStylePreset::NeonPunk:
+        return LOCTEXT("StyleNeonPunk", "Neon Punk");
+    case EStylePreset::Origami:
+        return LOCTEXT("StyleOrigami", "Origami");
+    case EStylePreset::Photographic:
+        return LOCTEXT("StylePhotographic", "Photographic");
+    case EStylePreset::PixelArt:
+        return LOCTEXT("StylePixelArt", "Pixel Art");
+    case EStylePreset::TileTexture:
+        return LOCTEXT("StyleTileTexture", "Tile Texture");
+    default:
+        return LOCTEXT("UnknownStyle", "Unknown Style");
+    }
+}
+
+FString STextureGeneratorWidget::GetStyleAPIString(EStylePreset Style) const
+{
+    switch (Style)
+    {
+    case EStylePreset::None:
+        return FString();
+    case EStylePreset::Model3D:
+        return TEXT("3d-model");
+    case EStylePreset::AnalogFilm:
+        return TEXT("analog-film");
+    case EStylePreset::Anime:
+        return TEXT("anime");
+    case EStylePreset::Cinematic:
+        return TEXT("cinematic");
+    case EStylePreset::ComicBook:
+        return TEXT("comic-book");
+    case EStylePreset::DigitalArt:
+        return TEXT("digital-art");
+    case EStylePreset::Enhance:
+        return TEXT("enhance");
+    case EStylePreset::FantasyArt:
+        return TEXT("fantasy-art");
+    case EStylePreset::Isometric:
+        return TEXT("isometric");
+    case EStylePreset::LineArt:
+        return TEXT("line-art");
+    case EStylePreset::LowPoly:
+        return TEXT("low-poly");
+    case EStylePreset::ModelingCompound:
+        return TEXT("modeling-compound");
+    case EStylePreset::NeonPunk:
+        return TEXT("neon-punk");
+    case EStylePreset::Origami:
+        return TEXT("origami");
+    case EStylePreset::Photographic:
+        return TEXT("photographic");
+    case EStylePreset::PixelArt:
+        return TEXT("pixel-art");
+    case EStylePreset::TileTexture:
+        return TEXT("tile-texture");
+    default:
+        return FString();
+    }
+}
+
+void STextureGeneratorWidget::OnStyleSelectionChanged(TSharedPtr<EStylePreset> NewSelection,
+    ESelectInfo::Type SelectInfo)
+{
+    if (NewSelection.IsValid())
+    {
+        SelectedStyleOption = NewSelection;
+    }
+}
+
 void STextureGeneratorWidget::OnReferenceTextureChanged(const FAssetData& AssetData)
 {
     if (AssetData.IsValid())
@@ -473,6 +717,15 @@ FReply STextureGeneratorWidget::OnGenerateClicked()
         return FReply::Handled();
     }
 
+    // Get the style preset string for the API
+    FString StylePreset;
+    if (SelectedStyleOption.IsValid() && *SelectedStyleOption != EStylePreset::None)
+    {
+        StylePreset = GetStyleAPIString(*SelectedStyleOption);
+    }
+
+    int32 SeedValue = GenerationSeed;
+
     // Start progress tracking
     bInProgress = true;
     GenerationProgress = 0.0f;
@@ -480,7 +733,14 @@ FReply STextureGeneratorWidget::OnGenerateClicked()
 
     // Send request to the API - runs text-to-image by default.
     // If valid texture was passed, it attempts to run image-to-image workflow.
-    Client->GenerateImage(PromptText, NegativePromptText, SelectedReferenceTexture.Get(), Strength, *SelectedModelOption);
+    Client->GenerateImage(
+        PromptText,
+        NegativePromptText,
+        SelectedReferenceTexture.Get(),
+        Strength,
+        *SelectedModelOption,
+        SeedValue,
+        StylePreset);
     
     return FReply::Handled();
 }

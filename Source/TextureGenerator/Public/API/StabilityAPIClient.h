@@ -18,6 +18,29 @@ enum class EImageGenerationModel : uint8
     StableDiffusion UMETA(DisplayName = "Stable Diffusion 3.5")
 };
 
+UENUM()
+enum class EStylePreset : uint8
+{
+    None,
+    Model3D,
+    AnalogFilm,
+    Anime,
+    Cinematic,
+    ComicBook,
+    DigitalArt,
+    Enhance,
+    FantasyArt,
+    Isometric,
+    LineArt,
+    LowPoly,
+    ModelingCompound,
+    NeonPunk,
+    Origami,
+    Photographic,
+    PixelArt,
+    TileTexture
+};
+
 DECLARE_DELEGATE_OneParam(FOnImageGenerated, const TArray<uint8>&);
 DECLARE_DELEGATE_OneParam(FOnError, const FString&);
 DECLARE_DELEGATE_OneParam(FOnProgress, float);
@@ -37,7 +60,9 @@ public:
         const FString& NegativePrompt,
         UTexture2D* ReferenceTexture,
         float InStrength,
-        EImageGenerationModel Model
+        EImageGenerationModel Model,
+        int32 InSeed,
+        const FString& InStylePreset
     );
 
     // Cancel the current generation request
@@ -72,4 +97,5 @@ private:
     TArray<uint8> CurrentReferenceImage;
     int32 CurrentSeed;      // -1 for random, >0 for specific seed
     float CurrentStrength;  // 0-1, for img2img influence
+    FString CurrentStylePreset;  // if empty, no style will be applied
 };
